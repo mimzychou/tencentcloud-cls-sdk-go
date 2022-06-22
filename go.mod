@@ -1,4 +1,4 @@
-module github.com/tencentcloud/tencentcloud-cls-sdk-go
+module github.com/mimzychou/tencentcloud-cls-sdk-go
 
 go 1.16
 

@@ -9,6 +9,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"log"
 	"time"
 
 	"github.com/pierrec/lz4"
@@ -206,7 +207,17 @@ func (client *CLSClient) Send(topicId string, group *LogGroup) *CLSError {
 	if resp.StatusCode >= 500 {
 		return NewError(int32(resp.StatusCode), resp.Header.Get("X-Cls-Requestid"), INTERNAL_SERVER_ERROR, errors.New("server internal error"))
 	}
-	return NewError(int32(resp.StatusCode), resp.Header.Get("X-Cls-Requestid"), UNKNOWN_ERROR, errors.New("unknown error"))
+	log.Println(resp.StatusCode)
+	v, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return NewError(int32(resp.StatusCode), resp.Header.Get("X-Cls-Requestid"), BAD_REQUEST, errors.New("bad request"))
+	}
+	var message ErrorMessage
+	if err := json.Unmarshal(v, &message); err != nil {
+		return NewError(int32(resp.StatusCode), resp.Header.Get("X-Cls-Requestid"), BAD_REQUEST, errors.New("bad request"))
+	}
+	return NewError(int32(resp.StatusCode), resp.Header.Get("X-Cls-Requestid"), message.Code, errors.New(message.Message))
+// 	return NewError(int32(resp.StatusCode), resp.Header.Get("X-Cls-Requestid"), UNKNOWN_ERROR, errors.New("unknown error"))
 }
 
 func copyIncompressible(src, dst []byte) (int, error) {
